@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="tr" data-type="software" data-radius="soft" data-ground="sky" data-buttons="arrow" data-motion>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aviation AI Command Center: havacılık için dokuz makine öğrenmesi modeli</title>
+<meta name="description" content="Gecikme riskinden yüz eşleştirme eşiğine dokuz havacılık modeli içeren bir Streamlit panosu; her model hiç görmediği veride test edilir.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Aviation AI Command Center: havacılık için dokuz makine öğrenmesi modeli">
+<meta property="og:description" content="Pano: gecikme riski, motor ömrü, hava sahası çatışmaları, uçak boyutlandırma ve beş uygulama daha; internetsiz çalışır.">
+<meta property="og:image" content="share.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="alternate" hreflang="en" href="index.html">
+<link rel="alternate" hreflang="tr" href="tr.html">
+<meta name="theme-color" content="#161c1a">
+<!-- <link rel="canonical" href="https://[the project's domain]/"> -->
+<meta name="site-kind" content="software">
+<meta name="page-type" content="software">
+<!-- fonts are local files (assets/fonts, SIL OFL 1.1): the page makes no request to another host -->
+<style>
+@font-face { font-family: "Newsreader"; src: url("assets/fonts/Newsreader.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "Hanken Grotesk"; src: url("assets/fonts/HankenGrotesk.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("assets/fonts/JetBrainsMono.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+</style>
+<link rel="stylesheet" href="assets/system.css">
+<link rel="stylesheet" href="assets/ui/cards.css">
+<link rel="stylesheet" href="assets/motion/motion.css">
+<link rel="stylesheet" href="assets/backgrounds/backgrounds.css">
+<link rel="stylesheet" href="assets/layout/layout.css">
+<link rel="stylesheet" href="assets/icons/icon.css">
+<style>
+:root {
+  --p-bg: #161c1a; --p-surface: #1f2725; --p-ink: #e3e2da; --p-muted: #8e948d;
+  --p-accent: #4c9eff; --p-accent-ink: #06101f; --p-action: #4c9eff; --p-action-ink: #06101f;
+  --p-inv-bg: #e3e2da; --p-inv-surface: #d3d2cb; --p-inv-ink: #161c1a; --p-inv-muted: #555a55;
+  --p-inv-accent: #161c1a; --p-inv-accent-ink: #e3e2da; --p-inv-action: #161c1a; --p-inv-action-ink: #e3e2da;
+  --font-display: "Newsreader", Georgia, serif;
+  --font-text: "Hanken Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --display-weight: 400;
+  --display-tracking: -0.018em;
+  --display-tracking-xl: -0.025em;
+  --ly-scale: 1.06;
+}
+</style>
+<link rel="stylesheet" href="assets/ui/base.css">
+<link rel="stylesheet" href="assets/ui/window/fragment.css">
+<link rel="stylesheet" href="assets/diagrams/diagram.css">
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+<script src="assets/backgrounds/backgrounds.js"></script>
+<script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
+<link rel="modulepreload" href="assets/moments/moments.js">
+<link rel="modulepreload" href="assets/moments/lib.js">
+<link rel="modulepreload" href="assets/moments/letters-assemble/moment.js">
+<style>
+  /* app-frame (sections-library.md, the whole recipe) */
+  .app.ui { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); margin-top: var(--s-7); background: var(--u-bg); border: 1px solid var(--u-border); border-radius: var(--u-r); box-shadow: var(--u-shadow); }
+  .app > .app__pane { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+  .app > .app__pane + .app__pane { border-left: 1px solid var(--u-line); }
+  .app > .app__pane > .ui-panel { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
+  .app > .app__pane::after { content: ""; position: absolute; inset: auto 0 0 0; height: 64px; background: linear-gradient(transparent, var(--u-bg)); pointer-events: none; }
+  @media (min-width: 1024px) and (max-width: 1279px) { .app.ui { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); } }
+  @media (max-width: 1023px) {
+    .app.ui { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+    .app > .app__pane--list { max-height: 252px; }
+    .app > .app__pane--list::after { display: none; }
+    .app .ui-win__side { display: none; }
+    .app .ui-win__body { grid-template-columns: minmax(0, 1fr); }
+    .app > .app__pane + .app__pane { border-left: 0; border-top: 1px solid var(--u-line); }
+  }
+  @media (max-width: 639px) {
+    .app.ui { grid-template-rows: minmax(0, 1fr); }
+    .app > .app__pane--list { display: none; }
+    .app > .app__pane + .app__pane { border-top: 0; }
+  }
+  /* the open item: the air traffic model's picture, drawn from the OpenSky snapshot */
+  .atm { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; font: 13px/1.4 var(--font-text); color: var(--u-ink); }
+  .atm__bar { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 16px; border-bottom: 1px solid var(--u-line); background: var(--u-fill); color: var(--u-muted); }
+  .atm__bar b { color: var(--u-ink); font-weight: 500; }
+  .atm__map { min-height: 0; padding: 12px 16px 0; }
+  .radar { display: block; width: 100%; height: 100%; }
+  .radar__ring { fill: none; stroke: var(--u-line-2); stroke-dasharray: 2 4; }
+  .radar__pair { stroke: #e2725b; stroke-width: 1.5; stroke-dasharray: 3 3; }
+  .radar__alert { fill: none; stroke: #e2725b; stroke-width: 1.5; }
+  .radar__ac { fill: var(--u-muted); } .radar__ac--c { fill: var(--p-accent); } .radar__ac--d { fill: #d9b46a; }
+  .atm__list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 12px 16px 16px; border-top: 1px solid var(--u-line); }
+  .atm__list span { display: block; color: var(--u-muted); }
+  .atm__list b { font: 500 15px/1.3 var(--font-mono); color: var(--u-ink); }
+  #models .tile { --tile-ratio: 21 / 9; }
+  /* a phone shows each model as a two-up tile, the picture and its name; the line under it is on the desktop */
+  @media (max-width: 639px) { #models .tile { --tile-ratio: 8 / 5; } #models .tile > p { display: none; } #models .tile__head > h3 { font-size: 16px; } }
+  #testing .panel { --p-h: 100%; }
+  #loop .mo-la__sub, .faq__item p { color: var(--ink); }
+  /* on a tablet the six run three across, so the two groups stay two screens */
+  @media (min-width: 640px) and (max-width: 1023px) { #models .grid > .tile { grid-column: auto / span 4; } }
+  .data-photo { aspect-ratio: 1 / 1; }
+  .stack-icons { display: flex; flex-wrap: wrap; gap: var(--s-4); margin: var(--s-6) 0 0; padding: 0; list-style: none; }
+  .stack-icons img { display: block; width: auto; height: 32px; }
+  /* stacked on a tablet and a phone the photograph and the diagram take a wider crop, so each section stays one screen */
+  @media (max-width: 1023px) { #data .data-photo { aspect-ratio: 21 / 9; } }
+  @media (max-width: 639px) { #data .data-photo { aspect-ratio: 2 / 1; } #testing .rows { display: none; } #data .rows li:nth-child(n+5) { display: none; } }
+</style>
+</head>
+<body>
+<!-- type: software (an open-source machine-learning dashboard)
+     deal: hero photo (dealt split; the brief asks for a dark cinematic photograph hero like a luxury editorial site),
+     palette green-black-bone with the dashboard's blue glow (#4c9eff) as accent and action, so the site and the app share one colour,
+     type newsreader (forced: the software list holds no serif; the brief asks for big serif headlines),
+     nav nav-centre, close close-word, footer footer-dark (dealt footer-statement; its lit ground turned the close's button dark, one action in two looks), rhythm space, buttons arrow, mark stack, ground sky
+     moments: letters-assemble (#loop, its own statement section) -->
+
+<header class="nav nav--centre">
+  <div class="wrap nav__bar">
+    <a class="skip-link" href="#top">İçeriğe geç</a>
+    <a class="nav__logo" href="#top"><span class="mark" data-mark="stack" aria-hidden="true"></span>Aviation AI</a>
+    <nav class="nav__links" aria-label="Ana menü">
+      <div class="nav__item"><a class="nav__link" href="#app">Pano</a></div>
+      <div class="nav__item"><a class="nav__link" href="#models">Modeller</a></div>
+      <div class="nav__item"><a class="nav__link" href="#testing">Testler</a></div>
+      <div class="nav__item"><a class="nav__link" href="#data">Veri</a></div>
+      <div class="nav__item"><a class="nav__link" href="#faq">Sorular</a></div>
+    </nav>
+    <div class="nav__actions">
+      <a class="nav__link" href="index.html" hreflang="en" lang="en">English</a>
+      <a class="btn btn--primary" href="#models">Dokuz modeli gör<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+    </div>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menü">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero hero--photo" data-enter data-calm="left" data-box="none" data-tone="dark" aria-labelledby="hero-h">
+    <img class="hero__bg" src="assets/img/hero-c1500.jpg" srcset="assets/img/hero-c500.jpg 500w, assets/img/hero-c960.jpg 960w, assets/img/hero-c1280.jpg 1280w, assets/img/hero-c1500.jpg 1500w" sizes="(max-width: 639px) 188vw, 100vw" width="1500" height="1099" alt="Karanlık bir hava alanında, alacakaranlığın son ışığında bir kontrol kulesi" fetchpriority="high" decoding="async" data-phone-fill data-source="stand-in" data-subject="airfield at dusk" style="--ly-pos: 50% 0%; --ly-pos-phone: 85% 30%">
+    <div class="wrap"><div class="hero-text">
+      <div class="hero__text">
+        <h1 id="hero-h">Havacılıkta dokuz AI modeli</h1>
+        <p class="hero__lead">Gecikmeyi tahmin eden, çatışmaları işaretleyen, uçak boyutlandıran Streamlit panosu; her model görmediği veride test edilir.</p>
+        <div class="btn-row"><a class="btn btn--primary" href="#app">Panoyu gör<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a><a class="btn btn--secondary" href="#models">Dokuz modeli gör</a></div>
+      </div>
+      <dl class="hero__facts">
+        <div><dt>Modeller</dt><dd>Dokuz, gecikmeden binişe</dd></div>
+        <div><dt>Açık veri</dt><dd>6 set, NASA'dan OpenSky'a</dd></div>
+        <div><dt>Testler</dt><dd>pytest, yaklaşık iki dakika</dd></div>
+        <div><dt>Çalışma</dt><dd>İnternetsiz</dd></div>
+      </dl>
+    </div></div>
+  </section>
+
+  <section class="section" id="app" aria-labelledby="app-h">
+    <div class="wrap">
+      <div class="grid">
+        <h2 class="span-5" id="app-h">Bütün modeller tek ekranda</h2>
+        <div class="span-6 start-7 stack-4">
+          <p>Her model ilk açılışta eğitilir ve kendi sayfasında açılır. Burada hava trafik modeli Türkiye üzerindeki 250 gerçek uçağı önümüzdeki 20 dakika için denetliyor.</p>
+          <a class="link" href="#models">Dokuz modelin hepsini gör</a>
+        </div>
+      </div>
+      <div class="ui app fill" role="img" aria-label="Pano: dokuz uygulamanın listesi ve yanında hava trafik görüntüsü; 250 uçak, kırmızıyla işaretli 13 çatışma uyarısı" data-ui-pause-host>
+        <div class="app__pane app__pane--list">
+          <div class="ui ui-panel ui-win" data-ui="window" data-open="Bekliyor" data-work="Eğitiliyor" data-done="Hazır" data-ui-loop>
+            <div class="ui-win__bar">
+              <span class="ui-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="ui-win__crumb">Aviation AI <i>/</i> <b>Uygulamalar</b></span>
+              <span class="ui-spacer"></span>
+              <span class="ui-win__search" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg><span class="ui-win__ph">Ara</span><span class="ui-kbd">/</span></span>
+            </div>
+            <div class="ui-win__body">
+              <nav class="ui-win__side" aria-hidden="true">
+                <span class="ui-win__nav is-on">Genel bakış<em>9</em></span>
+                <span class="ui-win__nav">Operasyon<em>3</em></span>
+                <span class="ui-win__nav">Uçak<em>3</em></span>
+                <span class="ui-win__nav">Yolcu<em>3</em></span>
+                <span class="ui-win__label">Veri</span>
+                <span class="ui-win__nav"><span class="ui-win__hash">#</span>Sentetik</span>
+                <span class="ui-win__nav"><span class="ui-win__hash">#</span>Açık veri</span>
+              </nav>
+              <div class="ui-win__main">
+                <div class="ui-win__cols" aria-hidden="true"><span>Uygulama</span><span>Sonuç</span><span>Durum</span><span>No.</span></div>
+                <ul class="ui-win__rows">
+          <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="1">TF</span><span class="ui-win__who">Verimli trafik akışı</span><span class="ui-win__sub">Gecikme riski · AUC 0,81</span><span class="ui-win__st is-done" data-st>Hazır</span><span class="ui-win__age">01</span></li>
+          <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="3">SM</span><span class="ui-win__who">Emniyet ve bakım</span><span class="ui-win__sub">Motor ömrü · NASA C-MAPSS</span><span class="ui-win__st is-done" data-st>Hazır</span><span class="ui-win__age">02</span></li>
+          <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="4">AT</span><span class="ui-win__who">Hava trafik yönetimi</span><span class="ui-win__sub">%10 üstü 13 çift · 20 dk</span><span class="ui-win__st is-you" data-st>Açık</span><span class="ui-win__age">03</span></li>
+          <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="2">AD</span><span class="ui-win__who">Uçak tasarımı</span><span class="ui-win__sub">21 yolcu uçağı · MTOW hatası %6</span><span class="ui-win__st" data-st>Bekliyor</span><span class="ui-win__age">04</span></li>
+          <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="5">BG</span><span class="ui-win__who">Bagaj yönetimi</span><span class="ui-win__sub">Kaçan aktarmalar · AUC 0,90</span><span class="ui-win__st" data-st>Bekliyor</span><span class="ui-win__age">05</span></li>
+          <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="3">CE</span><span class="ui-win__who">Uçuş verimliliği ve karbon</span><span class="ui-win__sub">Yakıtta %2,3, fizikle doğrulandı</span><span class="ui-win__st" data-st>Bekliyor</span><span class="ui-win__age">06</span></li>
+          <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="1">IS</span><span class="ui-win__who">Uçak içi satış</span><span class="ui-win__sub">Talep sapması %26 → %6</span><span class="ui-win__st" data-st>Bekliyor</span><span class="ui-win__age">07</span></li>
+          <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="4">FD</span><span class="ui-win__who">Dolandırıcılık tespiti</span><span class="ui-win__sub">Zaman bölmesinde AUC 0,85</span><span class="ui-win__st" data-st>Bekliyor</span><span class="ui-win__age">08</span></li>
+          <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="2">BB</span><span class="ui-win__who">Biyometrik biniş</span><span class="ui-win__sub">FMR 1/1.000</span><span class="ui-win__st" data-st>Bekliyor</span><span class="ui-win__age">09</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="app__pane app__pane--open">
+          <div class="ui ui-panel atm">
+            <div class="atm__bar"><b>Hava trafik yönetimi</b><span>OpenSky anlık görüntüsü · 31 Ekim 2026, 15:18 UTC · FL100 üstü</span></div>
+            <div class="atm__map"><svg class="radar" viewBox="0 0 640 420" aria-hidden="true"><circle class="radar__ring" cx="478" cy="250" r="59"/><circle class="radar__ring" cx="478" cy="250" r="118"/><circle class="radar__ring" cx="478" cy="250" r="178"/><line class="radar__pair" x1="262.4" y1="202.6" x2="297.5" y2="184.3"/><line class="radar__pair" x1="328.7" y1="349.7" x2="360.4" y2="310.5"/><line class="radar__pair" x1="337.3" y1="187.3" x2="335.2" y2="176.6"/><line class="radar__pair" x1="320.0" y1="385.8" x2="304.3" y2="402.4"/><line class="radar__pair" x1="307.2" y1="246.3" x2="311.0" y2="249.6"/><line class="radar__pair" x1="280.1" y1="178.0" x2="312.2" y2="177.6"/><line class="radar__pair" x1="284.6" y1="399.9" x2="277.9" y2="407.5"/><line class="radar__pair" x1="358.6" y1="207.5" x2="346.1" y2="208.7"/><line class="radar__pair" x1="267.0" y1="260.9" x2="231.4" y2="285.3"/><line class="radar__pair" x1="212.6" y1="110.5" x2="214.6" y2="123.5"/><line class="radar__pair" x1="278.4" y1="96.9" x2="353.2" y2="170.0"/><line class="radar__pair" x1="287.0" y1="277.4" x2="250.7" y2="234.8"/><line class="radar__pair" x1="359.8" y1="192.6" x2="349.3" y2="172.9"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(244.8 283.8) rotate(143)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(395.8 194.9) rotate(106)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(305.4 135.6) rotate(312)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(227.9 223.3) rotate(326)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(326.8 263.7) rotate(132)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(216.4 313.5) rotate(166)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(280.1 178.0) rotate(88)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(498.9 312.3) rotate(176)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(336.3 127.2) rotate(326)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(351.2 386.5) rotate(130)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(204.9 290.4) rotate(145)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(358.1 393.2) rotate(273)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(252.5 138.5) rotate(117)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(384.7 287.3) rotate(334)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(241.7 131.1) rotate(120)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(279.0 153.5) rotate(130)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(317.3 217.5) rotate(151)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(358.6 207.5) rotate(180)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(220.3 119.6) rotate(119)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(320.1 189.4) rotate(152)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(359.1 214.7) rotate(175)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(384.5 162.4) rotate(303)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(211.9 154.7) rotate(138)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(222.8 235.9) rotate(340)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(223.5 360.9) rotate(308)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(359.3 175.8) rotate(338)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(283.0 101.5) rotate(327)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(214.8 181.3) rotate(157)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(311.4 250.1) rotate(132)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(321.1 127.3) rotate(296)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(248.6 286.1) rotate(161)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(235.6 126.1) rotate(122)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(289.7 162.6) rotate(134)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(211.1 106.0) rotate(289)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(263.0 148.9) rotate(116)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(591.2 217.6) rotate(111)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(333.1 245.6) rotate(151)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(570.4 194.8) rotate(291)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(294.9 105.4) rotate(305)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(379.3 295.8) rotate(160)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(219.2 129.7) rotate(114)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(254.7 128.7) rotate(139)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(387.0 282.2) rotate(349)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(272.5 94.0) rotate(123)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(205.7 101.3) rotate(121)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(341.8 112.5) rotate(305)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(344.2 180.4) rotate(322)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(236.7 310.3) rotate(141)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(219.5 162.4) rotate(135)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(366.5 224.5) rotate(336)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(506.7 263.2) rotate(310)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(366.2 393.6) rotate(92)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(227.5 244.1) rotate(294)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(463.9 353.8) rotate(112)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(381.0 181.8) rotate(292)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(328.7 349.7) rotate(108)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(312.2 177.6) rotate(262)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(215.7 270.4) rotate(349)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(320.0 385.8) rotate(306)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(639.3 179.3) rotate(100)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(220.4 313.7) rotate(146)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(346.7 148.2) rotate(344)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(378.9 306.9) rotate(103)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(238.9 91.7) rotate(294)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(216.5 238.5) rotate(294)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(252.4 100.5) rotate(306)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(248.2 105.7) rotate(151)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(409.8 325.9) rotate(85)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(337.3 187.3) rotate(274)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(325.9 291.4) rotate(128)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(320.0 305.3) rotate(311)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(266.6 297.4) rotate(148)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(277.8 355.3) rotate(304)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(388.4 272.2) rotate(352)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(403.4 329.5) rotate(289)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(281.9 362.5) rotate(335)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(290.4 337.0) rotate(295)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(211.1 298.3) rotate(285)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(296.9 158.2) rotate(131)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(241.3 134.6) rotate(124)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(268.8 109.6) rotate(311)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(558.5 170.9) rotate(276)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(318.9 346.4) rotate(107)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(222.1 127.1) rotate(113)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(283.2 302.1) rotate(310)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(393.7 405.5) rotate(356)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(395.2 269.3) rotate(354)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(278.4 303.9) rotate(112)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(470.1 401.4) rotate(121)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(392.9 398.7) rotate(356)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(212.6 110.5) rotate(118)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(542.3 396.9) rotate(302)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(278.4 96.9) rotate(100)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(217.2 302.9) rotate(293)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(262.4 202.6) rotate(123)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(402.2 326.1) rotate(86)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(353.5 171.1) rotate(344)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(319.1 220.6) rotate(151)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(242.4 225.3) rotate(139)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(438.9 334.7) rotate(67)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(204.1 226.2) rotate(348)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(500.9 388.4) rotate(139)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(340.7 313.4) rotate(298)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(395.7 329.5) rotate(80)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(307.2 246.3) rotate(130)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(299.6 171.4) rotate(111)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(382.6 234.9) rotate(339)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(284.6 399.9) rotate(162)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(295.1 159.9) rotate(118)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(402.9 120.2) rotate(104)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(606.2 165.1) rotate(114)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(228.1 224.2) rotate(161)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(276.9 331.5) rotate(125)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(575.7 172.6) rotate(289)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(215.7 158.7) rotate(139)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(367.4 215.5) rotate(337)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(205.6 146.7) rotate(183)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(220.1 231.7) rotate(142)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(279.9 271.0) rotate(308)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(287.0 277.4) rotate(319)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(219.9 284.4) rotate(325)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(388.1 402.3) rotate(128)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(515.2 264.6) rotate(45)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(220.8 102.1) rotate(279)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(509.8 269.4) rotate(220)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(362.2 182.3) rotate(269)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(350.8 186.6) rotate(105)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(590.4 165.6) rotate(276)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(389.7 344.6) rotate(358)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(388.8 320.1) rotate(354)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(251.6 242.5) rotate(321)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(599.4 223.8) rotate(272)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(221.3 325.0) rotate(53)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(230.5 97.1) rotate(136)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(335.2 176.6) rotate(245)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(333.0 182.5) rotate(160)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(343.8 184.6) rotate(124)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(311.6 141.7) rotate(308)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(307.1 129.1) rotate(324)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(359.8 192.6) rotate(298)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(451.1 216.6) rotate(107)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(204.8 123.1) rotate(113)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(291.2 93.1) rotate(140)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(453.4 321.8) rotate(313)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(265.9 125.4) rotate(304)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(245.4 140.9) rotate(115)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(566.6 193.4) rotate(291)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(519.9 239.7) rotate(281)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(363.8 200.3) rotate(16)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(259.5 147.3) rotate(115)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(290.5 231.5) rotate(357)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(241.2 129.8) rotate(121)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(290.0 162.9) rotate(134)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(214.6 123.5) rotate(109)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(216.4 159.4) rotate(138)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(347.8 179.9) rotate(321)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(250.7 234.8) rotate(140)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(268.6 248.8) rotate(123)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(341.5 300.5) rotate(115)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(290.7 263.0) rotate(123)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(255.4 119.4) rotate(296)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(279.8 256.1) rotate(123)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(393.9 281.5) rotate(7)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(337.8 158.8) rotate(164)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(254.2 238.9) rotate(138)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(318.7 112.2) rotate(322)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(244.7 99.7) rotate(151)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(202.8 183.3) rotate(319)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(303.8 247.1) rotate(137)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(315.4 283.2) rotate(128)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(346.7 281.7) rotate(132)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(359.1 225.6) rotate(332)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(304.3 402.4) rotate(336)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(356.8 191.0) rotate(328)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(333.7 296.9) rotate(115)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(282.4 257.8) rotate(123)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(272.2 251.2) rotate(123)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(364.5 310.1) rotate(116)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(228.1 331.7) rotate(303)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(277.9 407.5) rotate(143)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(212.6 210.0) rotate(312)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(219.5 403.0) rotate(329)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(251.1 339.8) rotate(138)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(346.1 208.7) rotate(158)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(337.2 157.7) rotate(28)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(226.4 336.2) rotate(142)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(307.0 95.2) rotate(320)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(353.2 170.0) rotate(344)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(634.7 216.7) rotate(269)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(389.2 320.0) rotate(1)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(389.8 349.2) rotate(359)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(350.4 204.9) rotate(335)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(360.4 310.5) rotate(145)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(267.0 260.9) rotate(307)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(244.9 265.0) rotate(142)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(294.0 269.2) rotate(125)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(358.2 199.3) rotate(323)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(254.0 276.7) rotate(137)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(272.2 319.1) rotate(156)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(207.4 103.9) rotate(39)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(207.1 391.0) rotate(311)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(249.6 123.6) rotate(291)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(204.0 407.4) rotate(153)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(251.6 311.6) rotate(159)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(349.3 172.9) rotate(224)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(270.2 120.2) rotate(306)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(337.4 392.2) rotate(118)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(219.7 210.0) rotate(329)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(311.0 249.6) rotate(131)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(585.4 207.0) rotate(61)"/><path class="radar__ac radar__ac--c" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(397.3 397.3) rotate(277)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(355.4 386.5) rotate(300)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(326.3 107.4) rotate(100)"/><path class="radar__ac radar__ac--d" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(270.6 325.7) rotate(293)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(207.7 191.6) rotate(336)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(297.5 184.3) rotate(158)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(586.3 173.7) rotate(276)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(342.3 373.5) rotate(136)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(242.6 314.4) rotate(295)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(262.5 292.9) rotate(152)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(231.4 285.3) rotate(340)"/><path class="radar__ac radar__ac--l" d="M0-5L3.5 4 0 2-3.5 4Z" transform="translate(577.4 406.8) rotate(341)"/><circle class="radar__alert" cx="320.0" cy="385.8" r="9"/><circle class="radar__alert" cx="304.3" cy="402.4" r="9"/><circle class="radar__alert" cx="280.1" cy="178.0" r="9"/><circle class="radar__alert" cx="287.0" cy="277.4" r="9"/><circle class="radar__alert" cx="277.9" cy="407.5" r="9"/><circle class="radar__alert" cx="337.3" cy="187.3" r="9"/><circle class="radar__alert" cx="346.1" cy="208.7" r="9"/><circle class="radar__alert" cx="358.6" cy="207.5" r="9"/><circle class="radar__alert" cx="353.2" cy="170.0" r="9"/><circle class="radar__alert" cx="335.2" cy="176.6" r="9"/><circle class="radar__alert" cx="360.4" cy="310.5" r="9"/><circle class="radar__alert" cx="267.0" cy="260.9" r="9"/><circle class="radar__alert" cx="359.8" cy="192.6" r="9"/><circle class="radar__alert" cx="212.6" cy="110.5" r="9"/><circle class="radar__alert" cx="349.3" cy="172.9" r="9"/><circle class="radar__alert" cx="278.4" cy="96.9" r="9"/><circle class="radar__alert" cx="262.4" cy="202.6" r="9"/><circle class="radar__alert" cx="311.0" cy="249.6" r="9"/><circle class="radar__alert" cx="214.6" cy="123.5" r="9"/><circle class="radar__alert" cx="250.7" cy="234.8" r="9"/><circle class="radar__alert" cx="297.5" cy="184.3" r="9"/><circle class="radar__alert" cx="307.2" cy="246.3" r="9"/><circle class="radar__alert" cx="231.4" cy="285.3" r="9"/><circle class="radar__alert" cx="284.6" cy="399.9" r="9"/><circle class="radar__alert" cx="328.7" cy="349.7" r="9"/><circle class="radar__alert" cx="312.2" cy="177.6" r="9"/></svg></div>
+            <div class="atm__list">
+              <div><span>Uçak</span><b>250</b></div>
+              <div><span>Uyarı, P ≥ %10</span><b>13 çift</b></div>
+              <div><span>En yüksek risk</span><b>%32 · 14 dk sonra</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section statement" id="loop" data-moment="letters-assemble" aria-labelledby="loop-h">
+    <div class="wrap">
+      <h2 class="mo-la__type" id="loop-h">Veri, model, karar</h2>
+      <p class="mo-la__sub">Her uygulama aynı döngüyü izler: sentetik ya da gerçek açık veri, görmediği veride test edilen bir model ve yakıt, dakika ya da para ile fiyatlanan bir karar.</p>
+    </div>
+  </section>
+
+  <section class="section g2" id="models" aria-labelledby="models-h">
+    <div class="wrap">
+      <div class="group">
+        <div class="section-head">
+          <h2 id="models-h">Dokuz model. <span class="muted">Her biri hiç görmediği veride puanlandı.</span></h2>
+        </div>
+        <div class="grid">
+          <a class="tile span-4" href="http://localhost:8501/?app=traffic_flow&amp;lang=tr">
+            <div class="tile__media"><img src="assets/img/app-traffic_flow-820.jpg" srcset="assets/img/app-traffic_flow-640.jpg 640w, assets/img/app-traffic_flow-820.jpg 820w, assets/img/app-traffic_flow.jpg 1100w" sizes="(max-width: 639px) 92vw, (max-width: 1279px) 42vw, 610px" alt="Kapılarda uçakların durduğu büyük bir havalimanının havadan görünüşü" width="1100" height="318" loading="lazy" decoding="async" data-source="library" data-subject="traffic flow"></div>
+            <div class="tile__head"><h3>Gecikme riski modeli</h3></div>
+            <p>15 dakikadan fazla gecikme riski, zamanda test edildi: AUC 0,81.</p>
+          </a>
+          <a class="tile span-4" href="http://localhost:8501/?app=safety_maintenance&amp;lang=tr">
+            <div class="tile__media"><img src="assets/img/app-safety_maintenance-820.jpg" srcset="assets/img/app-safety_maintenance-640.jpg 640w, assets/img/app-safety_maintenance-820.jpg 820w, assets/img/app-safety_maintenance.jpg 1100w" sizes="(max-width: 639px) 92vw, (max-width: 1279px) 42vw, 610px" alt="Bir yolcu uçağının motoru ve kanadında çalışan teknisyenler" width="1100" height="318" loading="lazy" decoding="async" data-source="library" data-subject="safety maintenance"></div>
+            <div class="tile__head"><h3>Motor ömrü modeli</h3></div>
+            <p>NASA turbofan verisinde kalan döngü sayısı ve plana esas bir alt sınır.</p>
+          </a>
+          <a class="tile span-4" href="http://localhost:8501/?app=atm_collision&amp;lang=tr">
+            <div class="tile__media"><img src="assets/img/app-atm_collision-820.jpg" srcset="assets/img/app-atm_collision-640.jpg 640w, assets/img/app-atm_collision-820.jpg 820w, assets/img/app-atm_collision.jpg 1100w" sizes="(max-width: 639px) 190vw, (max-width: 1279px) 42vw, 610px" alt="Radar ekranları başında hava trafik kontrolörleri" width="1100" height="318" loading="lazy" decoding="async" data-source="library" data-subject="atm collision"></div>
+            <div class="tile__head"><h3>Çatışma uyarısı modeli</h3></div>
+            <p>Çatışmaların %26'sını kaçırır; 5 NM'lik düz çizgi kuralı %37'sini kaçırıyor.</p>
+          </a>
+        </div>
+      </div>
+      <div class="stack-6">
+        <div class="grid">
+          <a class="tile span-4" href="http://localhost:8501/?app=aircraft_design&amp;lang=tr">
+            <div class="tile__media"><img src="assets/img/app-aircraft_design-820.jpg" srcset="assets/img/app-aircraft_design-640.jpg 640w, assets/img/app-aircraft_design-820.jpg 820w, assets/img/app-aircraft_design.jpg 1100w" sizes="(max-width: 639px) 92vw, (max-width: 1279px) 42vw, 610px" alt="Rüzgâr tünelinde bir yolcu uçağı modeli" width="1100" height="318" loading="lazy" decoding="async" data-source="library" data-subject="aircraft design"></div>
+            <div class="tile__head"><h3>Uçak boyutlandırma modeli</h3></div>
+            <p>Koltuk ve menzilden 21 gerçek uçak; MTOW medyan hatası %6.</p>
+          </a>
+          <a class="tile span-4" href="http://localhost:8501/?app=baggage_tracking&amp;lang=tr">
+            <div class="tile__media"><img src="assets/img/app-baggage_tracking-820.jpg" srcset="assets/img/app-baggage_tracking-640.jpg 640w, assets/img/app-baggage_tracking-820.jpg 820w, assets/img/app-baggage_tracking.jpg 1100w" sizes="(max-width: 639px) 92vw, (max-width: 1279px) 42vw, 610px" alt="Bir terminalde bagaj bandı" width="1100" height="318" loading="lazy" decoding="async" data-source="library" data-subject="baggage tracking"></div>
+            <div class="tile__head"><h3>Aktarma bagajı modeli</h3></div>
+            <p>Aktarma bagajlarını kaçırma riskine göre sıralar: AUC 0,90, sabit kuralda 0,78.</p>
+          </a>
+          <a class="tile span-4" href="http://localhost:8501/?app=carbon_efficiency&amp;lang=tr">
+            <div class="tile__media"><img src="assets/img/app-carbon_efficiency-820.jpg" srcset="assets/img/app-carbon_efficiency-640.jpg 640w, assets/img/app-carbon_efficiency-820.jpg 820w, assets/img/app-carbon_efficiency.jpg 1100w" sizes="(max-width: 639px) 190vw, (max-width: 1279px) 42vw, 610px" alt="Karlı bir dağın üstünde bir yolcu uçağı ve kontraili" width="1100" height="318" loading="lazy" decoding="async" data-source="library" data-subject="carbon efficiency"></div>
+            <div class="tile__head"><h3>Seyir seviyesi modeli</h3></div>
+            <p>Verinin kapsadığı aralıkta yakıtta %2,3 tasarruf; fizik modeliyle doğrulandı.</p>
+          </a>
+        </div>
+        <div class="grid">
+          <a class="tile span-4" href="http://localhost:8501/?app=inflight_sales&amp;lang=tr">
+            <div class="tile__media"><img src="assets/img/app-inflight_sales-820.jpg" srcset="assets/img/app-inflight_sales-640.jpg 640w, assets/img/app-inflight_sales-820.jpg 820w, assets/img/app-inflight_sales.jpg 1100w" sizes="(max-width: 639px) 92vw, (max-width: 1279px) 42vw, 610px" alt="Uçuşta tepsi masasında servis edilen bir yemek" width="1100" height="318" loading="lazy" decoding="async" data-source="library" data-subject="inflight sales"></div>
+            <div class="tile__head"><h3>İkram talebi modeli</h3></div>
+            <p>Tükenen ürünleri hesaba katar: talep sapması %26 yerine %6.</p>
+          </a>
+          <a class="tile span-4" href="http://localhost:8501/?app=fraud_detection&amp;lang=tr">
+            <div class="tile__media"><img src="assets/img/app-fraud_detection-820.jpg" srcset="assets/img/app-fraud_detection-640.jpg 640w, assets/img/app-fraud_detection-820.jpg 820w, assets/img/app-fraud_detection.jpg 1100w" sizes="(max-width: 639px) 92vw, (max-width: 1279px) 42vw, 610px" alt="Havayolu check-in bankoları" width="1100" height="318" loading="lazy" decoding="async" data-source="library" data-subject="fraud detection"></div>
+            <div class="tile__head"><h3>Ödeme dolandırıcılığı modeli</h3></div>
+            <p>Onay, ek doğrulama ya da ret; yalnızca gelmiş banka itirazlarıyla eğitilir.</p>
+          </a>
+          <a class="tile span-4" href="http://localhost:8501/?app=biometric_boarding&amp;lang=tr">
+            <div class="tile__media"><img src="assets/img/app-biometric_boarding-820.jpg" srcset="assets/img/app-biometric_boarding-640.jpg 640w, assets/img/app-biometric_boarding-820.jpg 820w, assets/img/app-biometric_boarding.jpg 1100w" sizes="(max-width: 639px) 190vw, (max-width: 1279px) 42vw, 610px" alt="Bir havalimanı terminalinde otomatik pasaport geçişleri" width="1100" height="318" loading="lazy" decoding="async" data-source="library" data-subject="biometric boarding"></div>
+            <div class="tile__head"><h3>Yüz eşleştirme eşiği modeli</h3></div>
+            <p>1.000'de 1 yanlış eşleşmede gruplar arası hata oranı 15 kat farklı.</p>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="testing" aria-labelledby="testing-h">
+    <div class="wrap">
+      <div class="grid">
+        <div class="span-5 stack-6">
+          <h2 id="testing-h">Her sayının arkasında üç test</h2>
+          <p class="t-lead">Modeller zamanda, hiç görmedikleri motor, uçak ve kişilerde ya da fiziğe karşı puanlanır. Karıştırılmış bölme yalnızca sonucu ne kadar şişirdiğini göstermek için yer alır.</p>
+          <ul class="rows">
+            <li><span class="rows__name">Dolandırıcılık, karışık bölme</span><span class="rows__value">AUC 0,93</span></li>
+            <li><span class="rows__name">Dolandırıcılık, zaman bölmesi</span><span class="rows__value">AUC 0,85</span></li>
+            <li><span class="rows__name">Seyir tasarrufu, iddia ve doğrulama</span><span class="rows__value">%17 → %1,7</span></li>
+          </ul>
+        </div>
+        <div class="frame frame--split span-6 start-7"><div class="panel panel--device"><div class="dg" data-ground="dark" data-dg-still data-diagram='{"layout": "lanes", "alt": "Açık veri her modele girer; model zamanda, görmediği birimlerde ve fiziğe karşı test edilir.", "input": {"label": "Veri", "icon": "ui:database", "sub": "6 veri seti"}, "core": {"label": "Model", "icon": "ui:brain"}, "lanes": [{"label": "Zaman", "icon": "ui:clock", "done": true, "sub": "Zamanda test"}, {"label": "Ayrık", "icon": "ui:users", "done": true, "sub": "Görülmemiş birimler"}, {"label": "Fizik", "icon": "ui:gauge", "done": true, "sub": "Fizikle doğrulama"}]}'></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="data" aria-labelledby="data-h">
+    <div class="wrap">
+      <div class="grid">
+        <div class="span-5 stack-6">
+          <h2 id="data-h">Altı açık veri seti, bir kez indirilir</h2>
+          <p>Tek bir betik yaklaşık 250 MB indirir; sonra pano ağa ihtiyaç duymaz. Bagaj ve satış için açık veri yok, bu ikisi sentetik kalır.</p>
+          <ul class="rows">
+            <li><span class="rows__name">nycflights13, New York kalkışları</span><span class="rows__value">CC0</span></li>
+            <li><span class="rows__name">NASA C-MAPSS turbofan verisi</span><span class="rows__value">Kamu malı</span></li>
+            <li><span class="rows__name">OpenSky Network, Türkiye üzeri</span><span class="rows__value">Araştırma amaçlı</span></li>
+            <li><span class="rows__name">OpenAP uçak ve yakıt modelleri</span><span class="rows__value">LGPL-3.0</span></li>
+            <li><span class="rows__name">Kart ödemeleri, ULB</span><span class="rows__value">DbCL</span></li>
+            <li><span class="rows__name">Labeled Faces in the Wild</span><span class="rows__value">Araştırma amaçlı</span></li>
+          </ul>
+        </div>
+        <div class="frame frame--photo span-6 start-7 data-photo">
+          <img class="frame__img" src="assets/img/photo-f55313077-960.jpg" srcset="assets/img/photo-f55313077-500.jpg 500w, assets/img/photo-f55313077-960.jpg 960w" sizes="(max-width: 1023px) 100vw, 50vw" width="960" height="640" alt="Gece havadan görülen bir havalimanı ve çevresindeki şehir" loading="lazy" decoding="async" data-source="stand-in" data-subject="airport at night">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="faq" aria-labelledby="faq-h">
+    <div class="wrap">
+      <div class="grid">
+        <div class="span-5 stack-4">
+          <h2 id="faq-h">Sorular</h2>
+          <ul class="stack-icons" aria-label="Kullanılan araçlar">
+            <li><img data-icon="logos:python" src="assets/icons/python.svg" alt="Python" width="32" height="32" loading="lazy"></li>
+            <li><img data-icon="si:streamlit" src="assets/icons/streamlit.svg" alt="Streamlit" width="61" height="32" loading="lazy"></li>
+            <li><img data-icon="si:scikitlearn" src="assets/icons/scikitlearn.svg" alt="scikit-learn" width="32" height="32" loading="lazy"></li>
+            <li><img data-icon="si:plotly" src="assets/icons/plotly.svg" alt="Plotly" width="32" height="32" loading="lazy"></li>
+            <li><img data-icon="si:github" src="assets/icons/github.svg" alt="GitHub" width="32" height="32" loading="lazy"></li>
+          </ul>
+        </div>
+        <div class="faq span-6 start-7">
+          <div class="faq__item"><h3>Pano internet gerektiriyor mu?</h3><p>Hayır. Yalnızca açık verinin tek seferlik indirilmesi gerektirir; pano çalışırken ağa çıkmaz.</p></div>
+          <div class="faq__item"><h3>Modellerdeki veri gerçek mi?</h3><p>Dokuz modelden altısı gerçek açık veriyle çalışabilir. Varsayılan olarak hepsi seed'li sentetik veriyle çalışır.</p></div>
+          <div class="faq__item"><h3>Modeller operasyona hazır mı?</h3><p>Hayır. Bu bir eğitim ve araştırma projesi; buradaki hiçbir model uçuş ya da havalimanı kullanımı için sertifikalı değil.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer closing footer--dark" id="contact" aria-labelledby="close-h">
+  <div class="wrap">
+    <div class="closing__cta close--word">
+      <div class="section-head--split">
+        <div><h2 id="close-h">Dokuz modeli incele</h2><p class="t-lead">Her model hiç görmediği veride test edildi.</p></div>
+        <a class="btn btn--primary" href="#models">Dokuz modeli gör<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+      </div>
+      <p class="close__word" aria-hidden="true">Aviation AI</p>
+    </div>
+    <div class="closing__links">
+      <div class="grid">
+        <div class="span-4 stack-4">
+          <a class="nav__logo" href="#top"><span class="mark" data-mark="stack" aria-hidden="true"></span>Aviation AI</a>
+          <p class="footer__lede">Havacılık için dokuz makine öğrenmesi modeli, tek bir Streamlit panosunda.</p>
+        </div>
+        <div class="span-2 footer__col"><h3>Ürün</h3><ul><li><a href="#app">Pano</a></li><li><a href="#models">Modeller</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Yöntem</h3><ul><li><a href="#testing">Testler</a></li><li><a href="#data">Veri</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Yardım</h3><ul><li><a href="#faq">Sorular</a></li></ul></div>
+      </div>
+      <div class="footer__legal">
+        <span>&copy; 2026 Merthakan20</span>
+        <div class="socials"></div>
+        <span>Ürün adları ve logolar sahiplerinin ticari markalarıdır.</span>
+        <a class="credits" href="kaynakca.html">Fotoğraflar: Wikimedia Commons</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="assets/system.js"></script>
+<script type="module" src="assets/motion/motion.js"></script>
+<script type="module" src="assets/layout/layout.js"></script>
+<script type="module" src="assets/diagrams/mount.js"></script>
+</body>
+</html>

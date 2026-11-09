@@ -1,0 +1,48 @@
+{
+ "note": "Credits for the photographs in this folder: photos.mjs credits prints the footer block for the ones the pages use.",
+ "photos": [
+  {
+   "file": "photo-f176748906.jpg",
+   "files": [
+    "photo-f176748906-500.jpg",
+    "photo-f176748906-960.jpg",
+    "photo-f176748906-1280.jpg",
+    "photo-f176748906.jpg"
+   ],
+   "id": "f176748906",
+   "alt": "Night Stars at BRIGHT STAR 25- U S and Egypt participate in joint COMAO (9290438)",
+   "by": "U.S. Air Force photo by Staff Sgt. Kevin Dunkleberger",
+   "licence": "Public domain",
+   "licenceUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+   "page": "https://commons.wikimedia.org/wiki/File:Night_Stars_at_BRIGHT_STAR_25-_U_S_and_Egypt_participate_in_joint_COMAO_(9290438).jpg",
+   "source": "Wikimedia Commons"
+  },
+  {
+   "file": "photo-f70706357-500.jpg",
+   "files": [
+    "photo-f70706357-500.jpg"
+   ],
+   "id": "f70706357",
+   "alt": "Canton at Night B77W 01",
+   "by": "Meihe Chen",
+   "licence": "CC BY-SA 4.0",
+   "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "page": "https://commons.wikimedia.org/wiki/File:Canton_at_Night_B77W_01.jpg",
+   "source": "Wikimedia Commons"
+  },
+  {
+   "file": "photo-f55313077-960.jpg",
+   "files": [
+    "photo-f55313077-500.jpg",
+    "photo-f55313077-960.jpg"
+   ],
+   "id": "f55313077",
+   "alt": "201701 aerial photo of DMK at Night",
+   "by": "MNXANL",
+   "licence": "CC BY-SA 4.0",
+   "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+   "page": "https://commons.wikimedia.org/wiki/File:201701_aerial_photo_of_DMK_at_Night.jpg",
+   "source": "Wikimedia Commons"
+  }
+ ]
+}
